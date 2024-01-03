@@ -75,7 +75,7 @@ app.get("/whois/scan", (req, res,error) => {
     url: 'https://whoisjson.com/api/v1/whois',
     params: {domain: 'google.com'},
     headers: {
-      'Authorization': 'Token=9023d9994d4377ac33ec97f3660dcf5fd3e1fcc6c79f3f6a972ae47e7ff363bf'
+      'Authorization': 'Token=<YOUR-API-KEY>'
     }
   };
    
