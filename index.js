@@ -5,6 +5,7 @@ const app = express();
 app.use(cors());
 const util = require('util');
 const xml2js = require('xml2js');
+const fs = require('fs');
 
 
 // Promisify the exec function for easier use with async/await
@@ -14,12 +15,13 @@ const parseXmlAsync = util.promisify(xml2js.parseString);
 app.use(express.json());
 
 
-app.get('/nmap/scan', async (req, res) => {
-  const target = req.query.target || "google.com";
-  try {
-    // Get the target IP address from the request body
-    
 
+// Promisify exec function
+
+app.get('/nmap/scan', async (req, res) => {
+  const target = req.query.target;
+
+  try {
     if (!target) {
       return res.status(400).json({ error: 'Target IP address is required.' });
     }
@@ -52,12 +54,15 @@ app.get('/nmap/scan', async (req, res) => {
     };
 
     // Return Nmap scan results as JSON
-    res.send(result);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+
 
 
 
@@ -66,77 +71,114 @@ app.get('/nmap/scan', async (req, res) => {
 
 const axios = require("axios");
  
-app.get("/whois/scan", (req, res,error) => {
-  const target = req.query.target || "google.com";
-  const axios = require("axios");
- 
-  const options = {
-    method: 'GET',
-    url: 'https://whoisjson.com/api/v1/whois',
-    params: {domain: 'google.com'},
-    headers: {
-      'Authorization': 'Token=<YOUR-API-KEY>'
-    }
-  };
-   
-   axios.request(options).then(function (response) {
-       output  = response
-      res.send(output.data);
-  }).catch(function (error) {
-      console.error(error);
-  });
-   
-});
-
-
-
-app.get('/sqlmap/scan', async (req, res) => {
+app.get("/whois/scan", async (req, res) => {
   try {
-    // Get the target URL from the query parameters
-    const target = req.query.target || "google.com";
+    const target = req.query.target;
 
     if (!target) {
       return res.status(400).json({ error: 'Target URL is required.' });
     }
 
-    // Determine SQLMapAPI URL dynamically
-    const { stdout: sqlmapApiUrl } = await execAsync('sqlmapapi --url');
-    const apiUrl = sqlmapApiUrl.trim();
+    const options = {
+      method: 'GET',
+      url: 'https://whoisjson.com/api/v1/whois',
+      params: { domain: target },
+      headers: {
+        'Authorization': 'Token=<YOUR-API-KEY>' // Replace with your actual API key
+      }
+    };
 
-    // Forward the request to SQLMapAPI
-    const response = await axios.post(`${apiUrl}/task/new`, {
-      url: target,
-    });
+    const response = await axios.request(options);
 
-    const taskId = response.data.taskid;
-
-    // Wait for the scan to complete (you may adjust this based on your requirements)
-    await waitForScanCompletion(taskId, apiUrl);
-
-    // Retrieve scan results
-    const scanResults = await axios.get(`${apiUrl}/scan/${taskId}/data`);
-
-    // Return SQLMap scan results as JSON
-    res.json(scanResults.data);
+    // Sending the response from the external API directly to the client
+    res.json(response.data);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Helper function to wait for scan completion (you may need to adjust this)
-async function waitForScanCompletion(taskId, apiUrl) {
-  while (true) {
-    const taskInfo = await axios.get(`${apiUrl}/scan/${taskId}`);
 
-    if (taskInfo.data.status === 'terminated') {
-      break;
+
+
+
+let targetUrl = '';
+let dirsearchResult = null;
+
+// Function to perform dirsearch
+const performDirsearch = () => {
+  if (!targetUrl) {
+    console.error('Target URL is not set.');
+    return;
+  }
+
+  const dirsearchCommand = `dirsearch -u ${targetUrl} --format=json -o json`;
+
+  exec(dirsearchCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Command execution stderr: ${stderr}`);
+      return;
     }
 
-    // Adjust the delay based on your requirements
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log(`dirsearch command executed successfully. Output:\n${stdout}`);
+
+    // Assuming the output is a JSON string, you can parse it
+    try {
+      dirsearchResult = JSON.parse(stdout);
+      // You can do something with the result here if needed
+    } catch (parseError) {
+      console.error(`Error parsing dirsearch output as JSON: ${parseError.message}`);
+    }
+  });
+};
+
+// Set up a 1-minute timer
+setInterval(performDirsearch, 60000); // 60000 milliseconds = 1 minute
+
+// Endpoint to set the target URL
+app.get('/dirsearch/setTarget', (req, res) => {
+  const newTargetUrl = req.query.url;
+
+  if (!newTargetUrl) {
+    return res.status(400).json({ error: 'Please provide a target URL in the "url" query parameter.' });
   }
-}
+
+  targetUrl = newTargetUrl;
+  res.json({ message: `Target URL set to: ${targetUrl}` });
+});
+
+// Endpoint to get the latest dirsearch results
+// Endpoint to get the raw results of the "cat json" command
+app.get('/dirsearch/getResults', (req, res) => {
+  const catCommand = 'cat json';
+
+  exec(catCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    if (stderr) {
+      console.error(`Command execution stderr: ${stderr}`);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    console.log(`cat command executed successfully. Output:\n${stdout}`);
+
+    try {
+      const formattedJson = stdout.replace(/\n/g, '');
+      const parsedJson = JSON.parse(formattedJson);
+
+      res.json({ result: parsedJson });
+    } catch (parseError) {
+      console.error(`Error parsing or formatting JSON: ${parseError.message}`);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+});
 
 
 app.get("/", (req, res) => {

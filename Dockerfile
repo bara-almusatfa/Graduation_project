@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a base image
-FROM node:16
+FROM ubuntu
 
 # Install any dependencies required for your Express app
 RUN npm install -g nodemon
@@ -11,9 +11,9 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y nmap \
     whois \
-    sqlmap \
-    npm install -g xml2json \ 
-    gem install nmap2json \ 
+    dirsearch \
+    npm install xml2js \ 
+
 
     
 
@@ -30,4 +30,4 @@ RUN npm i
 EXPOSE 3001
 
 # Define the command to run your application
-CMD ["npm", "run", "dev"]
+CMD ["nodemon" ,"index.js" ]
