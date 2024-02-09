@@ -12,7 +12,8 @@ RUN apt-get update && \
     apt-get install -y nmap \
     whois \
     dirsearch \
-    npm install xml2js \ 
+    npm install xml2js && \ 
+     
 
 
     

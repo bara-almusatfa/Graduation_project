@@ -69,35 +69,59 @@ app.get('/nmap/scan', async (req, res) => {
 
 
 
-const axios = require("axios");
- 
-app.get("/whois/scan", async (req, res) => {
-  try {
-    const target = req.query.target;
+app.get('/whois/scan/', (req, res) => {
+  const url = req.query.url;
 
-    if (!target) {
-      return res.status(400).json({ error: 'Target URL is required.' });
-    }
-
-    const options = {
-      method: 'GET',
-      url: 'https://whoisjson.com/api/v1/whois',
-      params: { domain: target },
-      headers: {
-        'Authorization': 'Token=<YOUR-API-KEY>' // Replace with your actual API key
-      }
-    };
-
-    const response = await axios.request(options);
-
-    // Sending the response from the external API directly to the client
-    res.json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+  if (!url) {
+      res.status(400).json({ error: 'Please provide a URL as a query parameter.' });
+      return;
   }
+
+  runWhois(url)
+      .then(result => {
+          const formattedResult = parseWhoisResult(result);
+          res.json(formattedResult);
+      })
+      .catch(error => {
+          res.status(500).json({ error: 'Error running whois command: ' + error.message });
+      });
 });
 
+function runWhois(url) {
+  return new Promise((resolve, reject) => {
+      exec(`whois ${url}`, (error, stdout, stderr) => {
+          if (error) {
+              reject(error);
+              return;
+          }
+          if (stderr) {
+              reject(new Error(stderr));
+              return;
+          }
+          resolve(stdout);
+      });
+  });
+}
+
+function parseWhoisResult(result) {
+  // Splitting result into lines
+  const lines = result.split('\n');
+  // Filtering out empty lines and comments
+  const filteredLines = lines.filter(line => line.trim() !== '' && !line.startsWith('%'));
+
+  // Creating an object to hold parsed information
+  const parsedResult = {};
+
+  // Parsing each line and adding it to the object
+  filteredLines.forEach(line => {
+      const [key, value] = line.split(':').map(part => part.trim());
+      if (key && value) {
+          parsedResult[key] = value;
+      }
+  });
+
+  return parsedResult;
+}
 
 
 
