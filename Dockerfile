@@ -2,33 +2,31 @@
 FROM ubuntu
 
 # Install any dependencies required for your Express app
-RUN npm install -g nodemon
+RUN apt-get update && \
+    apt-get install -y \
+    nodejs \
+    npm \
+    nmap \
+    whois \
+    dirsearch \ 
+    wget \
+    git && \
+    npm install -g nodemon express xml2js
 
 # Set the working directory in the container
 WORKDIR /app
-
-# Install Nmap
-RUN apt-get update && \
-    apt-get install -y nmap \
-    whois \
-    dirsearch \
-    npm install xml2js && \ 
-     
-
-
-    
 
 # Copy the rest of your application code
 COPY . .
 
 # Set node_modules to be a volume mount
- VOLUME [ "node_modules" ]
+VOLUME [ "node_modules" ]
 
 # Install app dependencies
-RUN npm i
+RUN npm install
 
 # Expose the port your app will run on
 EXPOSE 3001
 
 # Define the command to run your application
-CMD ["nodemon" ,"index.js" ]
+CMD ["nodemon", "index.js"]
