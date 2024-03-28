@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a base image
-FROM ubuntu
+FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 # Install any dependencies required for your Express app
 RUN  apt-get update && \
@@ -10,7 +10,7 @@ RUN  apt-get update && \
     whois \
     dirsearch && \  
     npm install -g nodemon && \ 
-    npm install express xml2js
+    npm install -g express xml2js
 
 # Set the working directory in the container
 
@@ -30,4 +30,4 @@ RUN npm install
 EXPOSE 3001
 
 # Define the command to run your application
-CMD ["npm","start","&&","nodemon", "index.js"]
+CMD ["nodemon", "index.js"]
