@@ -125,7 +125,6 @@ function parseWhoisResult(result) {
 
 
 
-
 let targetUrl = '';
 let dirsearchResult = null;
 
@@ -160,10 +159,10 @@ const performDirsearch = () => {
   });
 };
 
-// Set up a 1-minute timer
-setInterval(performDirsearch, 60000); // 60000 milliseconds = 1 minute
+// Set up a 30-second timer to perform dirsearch
+setInterval(performDirsearch, 30000); // 30000 milliseconds = 30 seconds
 
-// Endpoint to set the target URL
+// Endpoint to set the target URL for dirsearch
 app.get('/dirsearch/setTarget', (req, res) => {
   const newTargetUrl = req.query.url;
 
@@ -176,13 +175,21 @@ app.get('/dirsearch/setTarget', (req, res) => {
 });
 
 // Endpoint to get the latest dirsearch results
-// Endpoint to get the raw results of the "cat json" command
 app.get('/dirsearch/getResults', (req, res) => {
+  if (!dirsearchResult) {
+    return res.status(404).json({ error: 'Dirsearch results not available yet.' });
+  }
+
+  res.json({ result: dirsearchResult });
+});
+
+// Endpoint to get the raw results of the "cat json" command
+app.get('/dirsearch/getRawResults', (req, res) => {
   const catCommand = 'cat json';
 
   exec(catCommand, (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error: ${error.message}`);
+      console.error(`Error executing command: ${error.message}`);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
     if (stderr) {
@@ -190,10 +197,10 @@ app.get('/dirsearch/getResults', (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
 
-    console.log(`cat command executed successfully. Output:\n${stdout}`);
+    console.log(`Command executed successfully. Output:\n${stdout}`);
 
     try {
-      const formattedJson = stdout.replace(/\n/g, '');
+      const formattedJson = stdout.trim(); // Remove leading/trailing whitespace
       const parsedJson = JSON.parse(formattedJson);
 
       res.json({ result: parsedJson });
