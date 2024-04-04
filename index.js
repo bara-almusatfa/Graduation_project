@@ -156,11 +156,14 @@ const performDirsearch = () => {
     } catch (parseError) {
       console.error(`Error parsing dirsearch output as JSON: ${parseError.message}`);
     }
+
+    // Stop the timer after one execution
+    clearInterval(timer);
   });
 };
 
 // Set up a 30-second timer to perform dirsearch
-setInterval(performDirsearch, 30000); // 30000 milliseconds = 30 seconds
+const timer = setInterval(performDirsearch, 30000); // 30000 milliseconds = 30 seconds
 
 // Endpoint to set the target URL for dirsearch
 app.get('/dirsearch/setTarget', (req, res) => {
@@ -174,14 +177,6 @@ app.get('/dirsearch/setTarget', (req, res) => {
   res.json({ message: `Target URL set to: ${targetUrl}` });
 });
 
-// Endpoint to get the latest dirsearch results
-app.get('/dirsearch/getResults', (req, res) => {
-  if (!dirsearchResult) {
-    return res.status(404).json({ error: 'Dirsearch results not available yet.' });
-  }
-
-  res.json({ result: dirsearchResult });
-});
 
 // Endpoint to get the raw results of the "cat json" command
 app.get('/dirsearch/getRawResults', (req, res) => {
@@ -210,7 +205,6 @@ app.get('/dirsearch/getRawResults', (req, res) => {
     }
   });
 });
-
 
 app.get("/", (req, res) => {
   res.redirect("/nmap/scan");
