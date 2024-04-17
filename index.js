@@ -27,7 +27,7 @@ app.get('/nmap/scan', async (req, res) => {
     }
 
     // Run Nmap scan with additional options and capture XML output
-    const command = `nmap -oX - -A -T5 -sV -sC ${target}`;
+    const command = `nmap -oX -  -T5 --max-rtt-timeout 1s --min-parallelism 100 ${target}`;
     const { stdout, stderr } = await execAsync(command);
 
     if (stderr) {
@@ -61,7 +61,7 @@ app.get('/nmap/scan', async (req, res) => {
   }
 });
 
-
+66
 
 
 
