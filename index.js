@@ -61,7 +61,7 @@ app.get('/nmap/scan', async (req, res) => {
   }
 });
 
-66
+
 
 
 
@@ -130,6 +130,9 @@ let dirsearchResult = null;
 
 // Function to perform dirsearch
 const performDirsearch = () => {
+  let targetUrl = '';
+let dirsearchResult = null;
+
   if (!targetUrl) {
     console.error('Target URL is not set.');
     return;
@@ -163,7 +166,6 @@ const performDirsearch = () => {
 };
 
 // Set up a 30-second timer to perform dirsearch
-const timer = setInterval(performDirsearch, 30000); // 30000 milliseconds = 30 seconds
 
 // Endpoint to set the target URL for dirsearch
 app.get('/dirsearch/setTarget', (req, res) => {
