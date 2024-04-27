@@ -11,7 +11,7 @@ RUN  apt-get update && \
     dirsearch && \  
     npm install -g nodemon && \ 
     npm install -g express && \ 
-    npm install -g xml2js
+    npm install -g xml2js --save
 
 # Set the working directory in the container
 
