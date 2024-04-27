@@ -125,45 +125,8 @@ function parseWhoisResult(result) {
 
 
 
-let targetUrl = '';
-let dirsearchResult = null;
 
 // Function to perform dirsearch
-const performDirsearch = () => {
-  let targetUrl = '';
-let dirsearchResult = null;
-
-  if (!targetUrl) {
-    console.error('Target URL is not set.');
-    return;
-  }
-
-  const dirsearchCommand = `dirsearch -u ${targetUrl} --format=json -o json`;
-
-  exec(dirsearchCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Command execution stderr: ${stderr}`);
-      return;
-    }
-
-    console.log(`dirsearch command executed successfully. Output:\n${stdout}`);
-
-    // Assuming the output is a JSON string, you can parse it
-    try {
-      dirsearchResult = JSON.parse(stdout);
-      // You can do something with the result here if needed
-    } catch (parseError) {
-      console.error(`Error parsing dirsearch output as JSON: ${parseError.message}`);
-    }
-
-    // Stop the timer after one execution
-    clearInterval(timer);
-  });
-};
 
 // Set up a 30-second timer to perform dirsearch
 
@@ -175,8 +138,38 @@ app.get('/dirsearch/setTarget', (req, res) => {
     return res.status(400).json({ error: 'Please provide a target URL in the "url" query parameter.' });
   }
 
-  targetUrl = newTargetUrl;
-  res.json({ message: `Target URL set to: ${targetUrl}` });
+  
+  let dirsearchResult = null;
+
+  
+
+    const dirsearchCommand = `dirsearch -u ${newTargetUrl} --format=json -o json`;
+
+    exec(dirsearchCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.error(`Command execution stderr: ${stderr}`);
+        return;
+      }
+
+      console.log(`dirsearch command executed successfully. Output:\n${stdout}`);
+
+      try {
+        dirsearchResult = JSON.parse(stdout);
+        // You can do something with the result here if needed
+      } catch (parseError) {
+        console.error(`Error parsing dirsearch output as JSON: ${parseError.message}`);
+      }
+
+      // Stop the timer after one execution
+      clearInterval(timer);
+    });
+  ;
+
+  res.json({ message: `Target URL set to: ${newTargetUrl}` });
 });
 
 
