@@ -143,7 +143,7 @@ app.get('/dirsearch/setTarget', (req, res) => {
 
   
 
-    const dirsearchCommand = `dirsearch -u ${newTargetUrl} --format=json -o json`;
+    const dirsearchCommand = `dirsearch -u ${newTargetUrl} -t 250 --format=json -o json `;
 
     exec(dirsearchCommand, (error, stdout, stderr) => {
       if (error) {
