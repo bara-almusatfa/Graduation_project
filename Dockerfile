@@ -31,4 +31,4 @@ RUN npm install
 EXPOSE 3001
 
 # Define the command to run your application
-CMD ["nodemon", "index.js"]
+CMD ["nodemon", "/Graduation_project/index.js"]
